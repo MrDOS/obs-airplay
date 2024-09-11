@@ -107,3 +107,17 @@ ln -s \
 ```
 
 [bundles]: https://en.wikipedia.org/wiki/Bundle_(macOS)
+
+## Properties
+
+![A screenshot of OBS showing the plugin's properties window.](resources/properties.png)
+
+* “Use the system MAC address”:
+  Causes the AirPlay server to be advertised with the system's MAC address
+  rather than a random address.
+* “Server name”:
+  Configures the advertised server name.
+  If left blank, “OBS” is used.
+
+To operate multiple AirPlay servers from the same computer,
+each must have a unique MAC address and name.

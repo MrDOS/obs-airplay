@@ -1,8 +1,10 @@
 #include "airplay.hpp"
+#include "plugin.h"
 #include <log/log.hpp>
 
 extern "C" {
 #include <obs/obs-module.h>
+#include <obs/obs-properties.h>
 
 OBS_DECLARE_MODULE()
 
@@ -38,6 +40,28 @@ static auto sourceHeight(void *v) -> uint32_t
   return static_cast<AirPlay *>(v)->getHeight();
 }
 
+static auto sourceProperties(void *v) -> obs_properties_t *
+{
+  UNUSED_PARAMETER(v);
+
+  obs_properties_t *properties = obs_properties_create();
+
+  obs_properties_add_bool(
+    properties,
+    USE_SYSTEM_MAC_ADDRESS_PROPERTY,
+    "Use the system MAC address"
+  );
+
+  obs_properties_add_text(
+    properties,
+    SERVER_NAME_PROPERTY,
+    "Server name",
+    OBS_TEXT_DEFAULT
+  );
+
+  return properties;
+}
+
 static struct obs_source_info source = {.id = "AirPlay",
                                         .type = OBS_SOURCE_TYPE_INPUT,
                                         .output_flags = OBS_SOURCE_ASYNC_VIDEO | OBS_SOURCE_AUDIO,
@@ -46,6 +70,7 @@ static struct obs_source_info source = {.id = "AirPlay",
                                         .destroy = sourceDestroy,
                                         .get_width = sourceWidth,
                                         .get_height = sourceHeight,
+                                        .get_properties = sourceProperties,
                                         .update = sourceUpdate,
                                         .icon_type = OBS_ICON_TYPE_DESKTOP_CAPTURE};
 

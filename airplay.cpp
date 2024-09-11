@@ -1,6 +1,7 @@
 #include "airplay.hpp"
 #include <chrono>
 #include <log/log.hpp>
+#include <obs/obs-data.h>
 #include <obs/obs.h>
 
 #include <assert.h>
@@ -23,6 +24,7 @@
 
 #include "dnssd.h"
 #include "logger.h"
+#include "plugin.h"
 #include "raop.h"
 #include "stream.h"
 
@@ -32,7 +34,6 @@
 #define LOWEST_ALLOWED_PORT 1024
 #define HIGHEST_PORT 65535
 
-static std::string server_name = DEFAULT_NAME;
 static unsigned int max_ntp_timeouts = NTP_TIMEOUT_LIMIT;
 
 static std::string find_mac()
@@ -415,7 +416,7 @@ AirPlay::AirPlay(struct obs_data *obsData, struct obs_source *obsSource)
     obsAFrame(std::make_unique<obs_source_audio>())
 {
   std::vector<char> server_hw_addr;
-  bool use_random_hw_addr = false;
+  bool use_system_mac_address = obs_data_get_bool(obsData, USE_SYSTEM_MAC_ADDRESS_PROPERTY);
   bool debug_log = DEFAULT_DEBUG_LOG;
   unsigned short tcp[3] = {0}, udp[3] = {0};
 
@@ -431,11 +432,10 @@ AirPlay::AirPlay(struct obs_data *obsData, struct obs_source *obsSource)
     LOG("using network ports UDP", udp[0], udp[1], udp[2], "TCP", tcp[0], tcp[1], tcp[2]);
 
   std::string mac_address;
-  if (!use_random_hw_addr)
+  if (use_system_mac_address)
     mac_address = find_mac();
   if (mac_address.empty())
   {
-    srand(time(NULL) * getpid());
     mac_address = random_mac();
     LOG("using randomly-generated MAC address", mac_address);
   }
@@ -447,6 +447,11 @@ AirPlay::AirPlay(struct obs_data *obsData, struct obs_source *obsSource)
   mac_address.clear();
 
   connections_stopped = true;
+
+  std::string server_name = obs_data_get_string(obsData, SERVER_NAME_PROPERTY);
+  if (server_name.empty()) {
+    server_name = DEFAULT_NAME;
+  }
 
   if (start_raop_server(server_hw_addr, server_name, tcp, udp, debug_log) != 0)
   {
